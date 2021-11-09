@@ -10,12 +10,14 @@ fn main() {
     for i in 1..10 {
         let buffer = buffer.clone();
         threads.push(thread::spawn(move || {
-            for _ in 0..10 {
+            for j in 0..10 {
                 let data = repeat(i as u8).take(i).collect::<Vec<_>>();
                 if buffer.push(&data) == 0 {
-                    break;
+                    println!("{} filled in {}", i, j);
+                    return;
                 }
             }
+            println!("{} ended", i);
         }));
     }
 
