@@ -5,10 +5,10 @@ use std::sync::Arc;
 use std::thread;
 
 fn main() {
-    let buffer = Arc::new(Buffer::<200>::new());
+    let buffer = Arc::new(Buffer::<300>::new());
     let mut threads = vec![];
     for i in 1..10 {
-        let buffer = buffer.clone();
+        let buffer = Arc::clone(&buffer);
         threads.push(thread::spawn(move || {
             for j in 0..10 {
                 let data = repeat(i as u8).take(i).collect::<Vec<_>>();
@@ -53,11 +53,9 @@ impl<const N: usize> Buffer<N> {
         }
 
         let ptr = self.buf.get() as *mut u8;
-        for (i, &d) in (index..).zip(data.iter()) {
-            unsafe {
-                // SAFETY: the starting index is atomic, and we won't write out of data.len() range.
-                *ptr.add(i) = d;
-            }
+        unsafe {
+            // SAFETY: the starting index is atomic, and we won't write out of data.len() range.
+            ptr.add(index).copy_from(data.as_ptr(), data.len());
         }
 
         data.len()
