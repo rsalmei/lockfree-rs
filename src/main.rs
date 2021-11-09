@@ -22,7 +22,7 @@ fn main() {
     }
 
     for t in threads {
-        t.join().unwrap();
+        let _ = t.join();
     }
     println!("{:?}", unsafe { *buffer.buf.get() })
 }
@@ -45,7 +45,9 @@ impl<const N: usize> Buffer<N> {
 
     fn push(&self, mut data: &[u8]) -> usize {
         let index = self.next_index.fetch_add(data.len(), Ordering::Relaxed);
-        if index + data.len() > N {
+        if index >= N {
+            return 0;
+        } else if index + data.len() > N {
             data = &data[..N - index];
             self.next_index.store(N, Ordering::Relaxed);
         }
